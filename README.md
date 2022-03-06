@@ -136,6 +136,24 @@ $ TEST_NGINX_BINARY=/usr/local/nginx/sbin/nginx prove -v
 Docker images and a docker compose file is available at the ./docker directory.
 
 ```
+docker build -t ja3nginx -f docker/debian-nginx-ssl-ja3/Dockerfile .
+```
+
+run with:
+
+```
+docker run --rm -ti -p 8443:443 ja3nginx nginx &
+```
+
+test js3_hash:
+```
+curl -s https://localhost:8443/ -k | jq -r .ja3_hash
+```
+
+
+Alternate:
+
+```
 $ docker-compose up --build -d
 
 Creating nginx-ssl-ja3

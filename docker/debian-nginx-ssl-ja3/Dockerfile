@@ -40,7 +40,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     mercurial \
     ngrep \
     procps \
-    python \
+    python3 \
     telnet \
     tcpflow \
     valgrind \
@@ -100,6 +100,15 @@ RUN echo '' | tee -a /root/.bashrc
 
 WORKDIR /build
 COPY docker/debian-nginx-ssl-ja3/compile.sh /build/compile.sh
+COPY config /build/nginx-ssl-ja3/config
+COPY src /build/nginx-ssl-ja3/src
+WORKDIR /build/nginx
+ENV ASAN_OPTIONS=symbolize=1
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+ENV PATH=$PATH:/usr/local/bin:/usr/local/nginx/sbin
+ENV ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer
+RUN ./auto/configure --add-module=/build/nginx-ssl-ja3 --with-http_ssl_module --with-stream_ssl_module --with-debug --with-stream --with-cc-opt="-fsanitize=address -O -fno-omit-frame-pointer" --with-ld-opt="-L/usr/local/lib -Wl,-E -lasan"
+RUN make install
 RUN echo 'TO COMPILE RUN:\n    cd nginx\n    ASAN_OPTIONS=symbolize=1 ./auto/configure --add-module=/build/nginx-ssl-ja3 --with-http_ssl_module --with-stream_ssl_module --with-debug --with-stream --with-cc-opt="-fsanitize=address -O -fno-omit-frame-pointer" --with-ld-opt="-L/usr/local/lib -Wl,-E -lasan"\n    make install' | tee -a /build/COMPILE.ASAN.README
 RUN echo 'TO TEST RUN:\n    nginx &\n    openssl s_client -connect 127.0.0.1:12345 -cipher "AES128-SHA" -curves secp521r1' | tee -a /build/TEST.README
 
